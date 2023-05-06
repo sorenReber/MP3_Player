@@ -1,14 +1,18 @@
 from tkinter import *
 import pygame
 from tkinter import filedialog
+import os
 
 # Main Window
 root = Tk()
 root.title('MP3 Player')
 root.geometry("500x350")
-
+current_user = os.getlogin()
 #Initialize Pygame Mixer
 pygame.mixer.init()
+
+# Set a song dictionary to match song names to their extracted paths
+songs_dict = {}
 
 # Get song time/length info
 def play_time():
@@ -19,27 +23,30 @@ def play_time():
 
 # Add Song Function
 def add_song():
-    song = filedialog.askopenfilename(initialdir='Libraries\Music', title="Choose A Song", filetypes=(("mp3 Files", "*.mp3"), ))
+    song = filedialog.askopenfilename(initialdir='/Users/'+ current_user + '/Music', title="Choose A Song", filetypes=(("mp3 Files", "*.mp3"), ))
     # Remove directory and file extension
-    song = song.replace("E:/Music and Podcasts/Music 2/", "")
-    song = song.replace(".mp3", "")
+    #song = song.replace("D:/Music and Podcasts/Music 2/", "")
+    song = extract_song_name(song)
     # Add song to list
     song_box.insert(END, song)
 
 # Add Many Songs to Playlist
 def add_many_songs():
-    songs = filedialog.askopenfilenames(initialdir='Libraries\Music', title="Choose A Song", filetypes=(("mp3 Files", "*.mp3"), ))
+    songs = filedialog.askopenfilenames(initialdir='/Users/'+ current_user + '/Music', title="Choose A Song", filetypes=(("mp3 Files", "*.mp3"), ))
     # Loop through song list, replace directory info
     for song in songs:
-        song = song.replace("E:/Music and Podcasts/Music 2/", "")
-        song = song.replace(".mp3", "")
+        #song = song.replace("D:/Music and Podcasts/Music 2/", "")
+        song_path = extract_song_path(song)
+        song = extract_song_name(song)
+        songs_dict[song] = song_path
         # Insert into playlist
         song_box.insert(END, song)
 
 # Play Selected Song
 def play():
     song = song_box.get(ACTIVE)
-    song = f'E:/Music and Podcasts/Music 2/{song}.mp3'
+    song_path = songs_dict[song]
+    song = f'{song_path}/{song}.mp3'
 
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops= 0)
@@ -60,7 +67,7 @@ def next_song():
     # Get song title from playlist
     song = song_box.get(next_one)
     # Add back on directory/folders 
-    song = f'E:/Music and Podcasts/Music 2/{song}.mp3'
+    song = f'D:/Music and Podcasts/Music 2/{song}.mp3'
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops= 0)
     # Clear active selection in listbox
@@ -72,14 +79,14 @@ def next_song():
 
 # Play the previous song
 def previous_song():
-        # Find current song index number
+    # Find current song index number
     next_one = song_box.curselection()
     # Add one to the current song number
     next_one = next_one[0]-1
     # Get song title from playlist
     song = song_box.get(next_one)
     # Add back on directory/folders 
-    song = f'E:/Music and Podcasts/Music 2/{song}.mp3'
+    song = f'D:/Music and Podcasts/Music 2/{song}.mp3'
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops= 0)
     # Clear active selection in listbox
@@ -115,6 +122,15 @@ def pause(is_paused):
         # Pause
         pygame.mixer.music.pause()
         paused = True
+
+def extract_song_name(file_path):
+    song_name_ext = os.path.basename(file_path)
+    song_name = song_name_ext.replace(".mp3", "")
+    return song_name
+
+def extract_song_path(file_path):
+    song_dir = os.path.dirname(file_path)
+    return song_dir
 
 # Create Playlist Box
 song_box = Listbox(root, bg="black", fg="red", width=60, selectbackground="gray", selectforeground="black")
