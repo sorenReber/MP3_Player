@@ -26,7 +26,9 @@ def add_song():
     song = filedialog.askopenfilename(initialdir='/Users/'+ current_user + '/Music', title="Choose A Song", filetypes=(("mp3 Files", "*.mp3"), ))
     # Remove directory and file extension
     #song = song.replace("D:/Music and Podcasts/Music 2/", "")
+    song_path = extract_song_path(song)
     song = extract_song_name(song)
+    songs_dict[song] = song_path
     # Add song to list
     song_box.insert(END, song)
 
