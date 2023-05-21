@@ -1,0 +1,14 @@
+MP3 Player - Tutorial follow with personal improvements.
+
+5-21-2023
+-Got the slider working to the point where it updates the current position of the slider based on the
+current time of the song.
+-Fixed the status bar from not displaying 00:00 time since when stopping it sets the number to a
+number less than 0
+-The playtime function that updates the song time display previously was called every second even
+after hitting stop. It now no longer does this by using the same logic that sets the displayed time to 00:00\
+-Fixed the next and previous buttons to as the new logic of using a dictionary to track the song names had
+broken them. They now work as they did previously.
+-Errors aren't thrown when pressing play/stop/etc. and no songs had been added. This came from the dictionary being checked
+for the song name and the dictionary was of course, empty.
+-Altered the menu for removing a song to make it more clear that removing a song was removing the last played song.
