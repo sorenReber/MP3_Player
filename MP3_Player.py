@@ -1,12 +1,15 @@
 from tkinter import *
 import pygame
 from tkinter import filedialog
+import time
 import os
+from mutagen.mp3 import MP3
+import tkinter as ttk
 
 # Main Window
 root = Tk()
 root.title('MP3 Player')
-root.geometry("500x350")
+root.geometry("500x450")
 current_user = os.getlogin()
 #Initialize Pygame Mixer
 pygame.mixer.init()
@@ -16,10 +19,39 @@ songs_dict = {}
 
 # Get song time/length info
 def play_time():
-    current_time = pygame.mixer.music.get_pos() /1000
-    status_bar.config(text=current_time)
-    # Update status bar time
-    status_bar.after(1000, play_time)
+    song = song_box.get(ACTIVE)
+    if song !="":
+        current_time = pygame.mixer.music.get_pos() /1000
+
+        # Convert time to a legible format
+        converted_current_time = time.strftime('%H:%M:%S', time.gmtime(current_time))
+
+        #current_song = song_box.curselection()
+        # Get song title from playlist
+
+        # Add back on directory/folders 
+    
+        song_path= songs_dict[song]
+        song = f'{song_path}/{song}.mp3'
+
+        # Get the total song length
+        song_mut = MP3(song)
+        global song_length
+        song_length = song_mut.info.length
+
+        # Convert song length to legible format
+        converted_song_length = time.strftime('%H:%M:%S', time.gmtime(song_length))
+
+        # Output song time to status time
+        status_bar.config(text=f"Time Elapsed: {converted_current_time}  of  {converted_song_length}  ")
+        # Update status bar time
+        status_bar.after(1000, play_time)
+
+        # Update slider to position
+        slider_position = int(song_length)
+        my_slider.config(to=slider_position, from_=0)
+    else:
+         status_bar.config(text=f"Time Elapsed: 00:00:00  of  00:00:00  ")
 
 # Add Song Function
 def add_song():
@@ -28,9 +60,13 @@ def add_song():
     #song = song.replace("D:/Music and Podcasts/Music 2/", "")
     song_path = extract_song_path(song)
     song = extract_song_name(song)
-    songs_dict[song] = song_path
-    # Add song to list
-    song_box.insert(END, song)
+    if song not in songs_dict.keys():
+        songs_dict[song] = song_path
+         # Add song to list
+        song_box.insert(END, song)
+    else:
+        print("duplicate")
+   
 
 # Add Many Songs to Playlist
 def add_many_songs():
@@ -40,25 +76,32 @@ def add_many_songs():
         #song = song.replace("D:/Music and Podcasts/Music 2/", "")
         song_path = extract_song_path(song)
         song = extract_song_name(song)
-        songs_dict[song] = song_path
-        # Insert into playlist
-        song_box.insert(END, song)
+        if song not in songs_dict.keys():
+            songs_dict[song] = song_path
+             # Insert into playlist
+            song_box.insert(END, song)
+        else:
+            print("duplicate")
+       
 
 # Play Selected Song
 def play():
     song = song_box.get(ACTIVE)
     song_path = songs_dict[song]
     song = f'{song_path}/{song}.mp3'
-
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops= 0)
     # Call the song timer info
     play_time()
 
+
 # Stop Playing Current Song
 def stop():
     pygame.mixer.music.stop()
     song_box.selection_clear(ACTIVE)
+    # Clear the status bar
+    status_bar.config(text="")
+    play_time()   
 
 # Play the next song
 def next_song():
@@ -68,8 +111,9 @@ def next_song():
     next_one = next_one[0]+1
     # Get song title from playlist
     song = song_box.get(next_one)
-    # Add back on directory/folders 
-    song = f'D:/Music and Podcasts/Music 2/{song}.mp3'
+    # Add back on directory/folders
+    song_path = songs_dict[song] 
+    song = f'{song_path}/{song}.mp3'
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops= 0)
     # Clear active selection in listbox
@@ -88,7 +132,8 @@ def previous_song():
     # Get song title from playlist
     song = song_box.get(next_one)
     # Add back on directory/folders 
-    song = f'D:/Music and Podcasts/Music 2/{song}.mp3'
+    song_path = songs_dict[song] 
+    song = f'{song_path}/{song}.mp3'
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops= 0)
     # Clear active selection in listbox
@@ -100,12 +145,16 @@ def previous_song():
 
 # Delete a song
 def delete_song():
+    remove_song = song_box.get(ANCHOR)
+    if remove_song != "":
+        del songs_dict[remove_song]
     song_box.delete(ANCHOR)
     pygame.mixer.music.stop()
 
 # Delete all songs from playlist
 def delete_all_songs():
     song_box.delete(0, END)
+    songs_dict.clear()
     pygame.mixer.music.stop()
 
 # Create Global Pause Variable
@@ -133,6 +182,11 @@ def extract_song_name(file_path):
 def extract_song_path(file_path):
     song_dir = os.path.dirname(file_path)
     return song_dir
+
+# Create Slider function
+def slide(x):
+    pass
+    slider_label.config(text=f'{int(my_slider.get())} of {int(song_length)}')
 
 # Create Playlist Box
 song_box = Listbox(root, bg="black", fg="red", width=60, selectbackground="gray", selectforeground="black")
@@ -184,5 +238,13 @@ remove_song_menu.add_command(label="Delete All Songs From Playlist", command=del
 # Create Status Bar
 status_bar = Label(root, text='', bd=1, relief=GROOVE, anchor=E)
 status_bar.pack(fill=X, side=BOTTOM, ipady=2)
+
+# Music Slider
+my_slider = ttk.Scale(root, from_=0, to=100, orient=HORIZONTAL, command=slide, length=360)
+my_slider.pack(pady=20)
+
+# Create temp slider label
+slider_label = ttk.Label(root, text=0)
+slider_label.pack(pady=10)
 
 root.mainloop()
